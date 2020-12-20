@@ -1,17 +1,23 @@
 import sys
 import os
 
+import PySide2
 from PySide2.QtWidgets import (QApplication, QWidget, QSystemTrayIcon, QLabel, QPushButton,
                                QMenu, QTextBrowser, QVBoxLayout, QGridLayout, QLineEdit, QMessageBox)
-from PySide2.QtGui import QIcon
+from PySide2.QtGui import QIcon, QColor
 from PySide2.QtCore import QCoreApplication, QSettings
-from PIL import ImageGrab
+# from PIL import ImageGrab
 import numpy as np
 
-# from xtranslator.recognition import imageToText
-# from xtranslator.translator import get_translator
+from xtranslator.recognition import imageToText
+from xtranslator.translator import get_translator
 from xtranslator.constants import (ORGANIZATION_DOMAIN, ORGANIZATION_NAME,
-                                   APPLICATION_NAME, SETTINGS_PATH_MODEL)
+                                   APPLICATION_NAME, SETTINGS_PATH_MODEL, DIR)
+
+dirname = os.path.dirname(PySide2.__file__)
+plugin_path = os.path.join(dirname, 'plugins', 'platforms')
+plugin_path = os.path.join(dirname, 'Qt', 'plugins', 'platforms')
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = plugin_path
 
 
 class WidgetPref(QWidget):
@@ -61,16 +67,31 @@ class WidgetTranslator(QWidget):
             QMessageBox.critical(self, 'Error', 'Model path is incorrect')
             return
 
-        content_clip = ImageGrab.grabclipboard()
-        if content_clip is None:
+        image = QApplication.clipboard().image()
+
+        if image.isNull():
             QMessageBox.information(self, '', 'No images found in the buffer')
             return
 
-        image = np.array(content_clip.convert('RGB'))
-        # text = imageToText(image)
-        # translator = get_translator(path_model)
-        # translated = translator(text)
-        translated = 'Test'
+        print(image.size())
+        print(image)
+
+        rgb = []
+
+        for x in range(0, image.size().height()):
+            row = []
+            for y in range(0, image.size().width()):
+                c = image.pixel(y, x)
+                colors = QColor(c).getRgb()
+                row.append(colors)
+            rgb.append(row)
+
+        print(rgb)
+
+        text = imageToText(rgb)
+        translator = get_translator(path_model)
+        translated = translator(text)
+        # translated = 'Test'
         self._output.setText(translated)
 
     def closeEvent(self, event):
@@ -116,7 +137,8 @@ def main():
     app = QApplication(sys.argv)
 
     w = QWidget()
-    trayIcon = SystemTrayIcon(QIcon("./assets/icon.png"), w)
+    path_icon = os.path.join(DIR, 'assets/icon.png')
+    trayIcon = SystemTrayIcon(QIcon(path_icon), w)
 
     trayIcon.show()
     sys.exit(app.exec_())

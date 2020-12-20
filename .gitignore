@@ -14,6 +14,7 @@ Icon
 # Custom
 venv
 .idea
+*__pycache__*
 
 # Files that might appear in the root of a volume
 .DocumentRevisions-V100

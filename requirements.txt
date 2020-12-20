@@ -1,0 +1,5 @@
+sentencepiece==0.1.94
+pytesseract
+opencv-python
+pillow
+argostranslate
